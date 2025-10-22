@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Family, Media, Post, Notification } from '../types';
 import { 
   getFamily, 
@@ -10,6 +11,11 @@ import {
   subscribeToFamilyNotifications
 } from '../lib/firestore';
 import Layout from './Layout';
+import NotificationPanel from './NotificationPanel';
+import ProfileViewer from './ProfileViewer';
+import Settings from './Settings';
+import CreatePost from './CreatePost';
+import BibleQuiz from './BibleQuiz';
 import { 
   Image, 
   Music, 
@@ -21,11 +27,15 @@ import {
   Heart,
   MessageCircle,
   Camera,
-  Headphones
+  Headphones,
+  Plus,
+  Trophy,
+  Gamepad2
 } from 'lucide-react';
 
 export default function FamilyDashboard() {
   const { userData } = useAuth();
+  const { isDarkMode } = useTheme();
   
   const [family, setFamily] = useState<Family | null>(null);
   const [recentMedia, setRecentMedia] = useState<Media[]>([]);
@@ -33,6 +43,13 @@ export default function FamilyDashboard() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'photos' | 'audio' | 'community'>('photos');
   const [loading, setLoading] = useState(true);
+  
+  // Panel states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showBibleQuiz, setShowBibleQuiz] = useState(false);
 
   useEffect(() => {
     const loadFamilyData = async () => {
@@ -85,9 +102,34 @@ export default function FamilyDashboard() {
     };
   }, [userData?.familyId]);
 
+  const handlePostCreated = () => {
+    // Refresh posts when a new post is created
+    if (userData?.familyId) {
+      getFamilyPosts(userData.familyId).then(setRecentPosts);
+    }
+  };
+
+  const handleNotificationRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      )
+    );
+  };
+
+  const unreadNotifications = notifications.filter(n => !n.isRead).length;
+
   if (loading) {
     return (
-      <Layout title="Loading...">
+      <Layout 
+        title="Loading..."
+        onNotificationClick={() => setShowNotifications(true)}
+        onProfileClick={() => setShowProfile(true)}
+        onSettingsClick={() => setShowSettings(true)}
+        notificationCount={unreadNotifications}
+      >
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
         </div>
@@ -99,10 +141,17 @@ export default function FamilyDashboard() {
   const audio = recentMedia.filter(media => media.type === 'audio');
 
   return (
-    <Layout title={`${family?.name} Family Dashboard`}>
+    <>
+      <Layout 
+        title={`${family?.name} Family Dashboard`}
+        onNotificationClick={() => setShowNotifications(true)}
+        onProfileClick={() => setShowProfile(true)}
+        onSettingsClick={() => setShowSettings(true)}
+        notificationCount={unreadNotifications}
+      >
       <div className="space-y-8">
         {/* Family Header */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+        <div className="rounded-3xl shadow-lg p-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome to {family?.name}</h1>
@@ -119,8 +168,17 @@ export default function FamilyDashboard() {
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="w-32 h-32 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Users className="w-16 h-16 text-white" />
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowBibleQuiz(true)}
+                  className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center hover:bg-white/30 transition-colors"
+                  title="Bible Quiz"
+                >
+                  <Trophy className="w-8 h-8 text-white" />
+                </button>
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
               </div>
             </div>
           </div>
@@ -128,54 +186,84 @@ export default function FamilyDashboard() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className={`rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <Image className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{photos.length}</h3>
-                <p className="text-gray-600">Recent Photos</p>
+                <h3 className={`text-lg font-semibold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {photos.length}
+                </h3>
+                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  Recent Photos
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className={`rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                 <Music className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{audio.length}</h3>
-                <p className="text-gray-600">Audio Files</p>
+                <h3 className={`text-lg font-semibold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {audio.length}
+                </h3>
+                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  Audio Files
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className={`rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                 <MessageSquare className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{recentPosts.length}</h3>
-                <p className="text-gray-600">Recent Posts</p>
+                <h3 className={`text-lg font-semibold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {recentPosts.length}
+                </h3>
+                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  Recent Posts
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content Tabs */}
-        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+        <div className={`rounded-3xl shadow-lg overflow-hidden ${
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}>
           {/* Tab Headers */}
-          <div className="border-b border-gray-200">
+          <div className={`border-b ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-200'
+          }`}>
             <nav className="flex space-x-8 px-8 py-4">
               <button
                 onClick={() => setActiveTab('photos')}
                 className={`flex items-center space-x-2 py-2 px-4 rounded-lg transition-colors ${
                   activeTab === 'photos'
                     ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : isDarkMode 
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 <Camera className="w-4 h-4" />
@@ -186,7 +274,9 @@ export default function FamilyDashboard() {
                 className={`flex items-center space-x-2 py-2 px-4 rounded-lg transition-colors ${
                   activeTab === 'audio'
                     ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : isDarkMode 
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 <Headphones className="w-4 h-4" />
@@ -197,7 +287,9 @@ export default function FamilyDashboard() {
                 className={`flex items-center space-x-2 py-2 px-4 rounded-lg transition-colors ${
                   activeTab === 'community'
                     ? 'bg-purple-100 text-purple-700'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : isDarkMode 
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 <MessageSquare className="w-4 h-4" />
@@ -211,7 +303,11 @@ export default function FamilyDashboard() {
             {activeTab === 'photos' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Recent Photos</h2>
+                  <h2 className={`text-2xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Recent Photos
+                  </h2>
                   <button className="text-blue-600 hover:text-blue-700 font-medium">
                     View All Photos
                   </button>
@@ -219,7 +315,11 @@ export default function FamilyDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {photos.map((photo) => (
                     <div key={photo.id} className="bg-gray-100 rounded-2xl aspect-square relative overflow-hidden group">
-                      <div className="w-full h-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                      <div className={`w-full h-full bg-gradient-to-br flex items-center justify-center ${
+                        isDarkMode 
+                          ? 'from-gray-700 to-gray-600' 
+                          : 'from-purple-100 to-blue-100'
+                      }`}>
                         <Image className="w-16 h-16 text-purple-400" />
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -234,8 +334,12 @@ export default function FamilyDashboard() {
                   ))}
                   {photos.length === 0 && (
                     <div className="col-span-full text-center py-12">
-                      <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No photos available yet</p>
+                      <Image className={`w-16 h-16 mx-auto mb-4 ${
+                        isDarkMode ? 'text-gray-600' : 'text-gray-400'
+                      }`} />
+                      <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
+                        No photos available yet
+                      </p>
                     </div>
                   )}
                 </div>
@@ -245,35 +349,67 @@ export default function FamilyDashboard() {
             {activeTab === 'audio' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Recent Audio</h2>
+                  <h2 className={`text-2xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Recent Audio
+                  </h2>
                   <button className="text-green-600 hover:text-green-700 font-medium">
                     View All Audio
                   </button>
                 </div>
                 <div className="space-y-4">
                   {audio.map((audioFile) => (
-                    <div key={audioFile.id} className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors">
+                    <div key={audioFile.id} className={`rounded-2xl p-6 transition-colors ${
+                      isDarkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600' 
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                             <Music className="w-6 h-6 text-green-600" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900">{audioFile.title}</h3>
-                            <p className="text-sm text-gray-600">{audioFile.description || 'No description'}</p>
+                            <h3 className={`font-semibold ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              {audioFile.title}
+                            </h3>
+                            <p className={`text-sm ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              {audioFile.description || 'No description'}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <button className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors">
+                          <button className={`p-2 text-green-600 rounded-lg transition-colors ${
+                            isDarkMode ? 'hover:bg-green-900/20' : 'hover:bg-green-100'
+                          }`}>
                             <Music className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                          <button className={`p-2 rounded-lg transition-colors ${
+                            isDarkMode 
+                              ? 'text-gray-400 hover:bg-gray-600' 
+                              : 'text-gray-600 hover:bg-gray-200'
+                          }`}>
                             <Download className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
                     </div>
                   ))}
+                  {audio.length === 0 && (
+                    <div className="text-center py-12">
+                      <Music className={`w-16 h-16 mx-auto mb-4 ${
+                        isDarkMode ? 'text-gray-600' : 'text-gray-400'
+                      }`} />
+                      <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
+                        No audio files available yet
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -281,35 +417,78 @@ export default function FamilyDashboard() {
             {activeTab === 'community' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Community Feed</h2>
-                  <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                    New Post
+                  <h2 className={`text-2xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Community Feed
+                  </h2>
+                  <button 
+                    onClick={() => setShowCreatePost(true)}
+                    className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>New Post</span>
                   </button>
                 </div>
                 <div className="space-y-6">
                   {recentPosts.map((post) => (
-                    <div key={post.id} className="bg-gray-50 rounded-2xl p-6">
+                    <div key={post.id} className={`rounded-2xl p-6 ${
+                      isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                    }`}>
                       <div className="flex items-start space-x-4">
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                          <span className="text-purple-600 font-medium">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isDarkMode ? 'bg-purple-900/20' : 'bg-purple-100'
+                        }`}>
+                          <span className={`font-medium ${
+                            isDarkMode ? 'text-purple-400' : 'text-purple-600'
+                          }`}>
                             {post.authorName.charAt(0)}
                           </span>
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
-                            <span className="font-medium text-gray-900">{post.authorName}</span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className="text-sm text-gray-500">
+                            <span className={`font-medium ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              {post.authorName}
+                            </span>
+                            <span className={`text-sm ${
+                              isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                            }`}>
+                              •
+                            </span>
+                            <span className={`text-sm ${
+                              isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                            }`}>
                               {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Recently'}
                             </span>
                             {post.type === 'announcement' && (
-                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                isDarkMode 
+                                  ? 'bg-blue-900/20 text-blue-400' 
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
                                 Announcement
                               </span>
                             )}
+                            {post.type === 'prayer-request' && (
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                isDarkMode 
+                                  ? 'bg-red-900/20 text-red-400' 
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                Prayer Request
+                              </span>
+                            )}
                           </div>
-                          <p className="text-gray-700 mb-4">{post.content}</p>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <p className={`mb-4 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            {post.content}
+                          </p>
+                          <div className={`flex items-center space-x-4 text-sm ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                          }`}>
                             <button className="flex items-center space-x-1 hover:text-red-500">
                               <Heart className="w-4 h-4" />
                               <span>{post.likes?.length || 0}</span>
@@ -325,8 +504,18 @@ export default function FamilyDashboard() {
                   ))}
                   {recentPosts.length === 0 && (
                     <div className="text-center py-12">
-                      <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No posts available yet</p>
+                      <MessageSquare className={`w-16 h-16 mx-auto mb-4 ${
+                        isDarkMode ? 'text-gray-600' : 'text-gray-400'
+                      }`} />
+                      <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
+                        No posts available yet
+                      </p>
+                      <button 
+                        onClick={() => setShowCreatePost(true)}
+                        className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
+                      >
+                        Create the first post
+                      </button>
                     </div>
                   )}
                 </div>
@@ -337,25 +526,91 @@ export default function FamilyDashboard() {
 
         {/* Notifications */}
         {notifications.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-lg p-8">
+          <div className={`rounded-3xl shadow-lg p-8 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Recent Updates</h2>
-              <Bell className="w-6 h-6 text-purple-600" />
+              <h2 className={`text-2xl font-bold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                Recent Updates
+              </h2>
+              <Bell className={`w-6 h-6 ${
+                isDarkMode ? 'text-purple-400' : 'text-purple-600'
+              }`} />
             </div>
             <div className="space-y-4">
               {notifications.map((notification) => (
-                <div key={notification.id} className="flex items-start space-x-4 p-4 bg-blue-50 rounded-xl">
+                <div key={notification.id} className={`flex items-start space-x-4 p-4 rounded-xl ${
+                  isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                }`}>
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{notification.title}</h3>
-                    <p className="text-sm text-gray-600">{notification.message}</p>
+                    <h3 className={`font-medium mb-1 ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {notification.title}
+                    </h3>
+                    <p className={`text-sm ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {notification.message}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {/* Floating Action Buttons */}
+        <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
+          <button
+            onClick={() => setShowBibleQuiz(true)}
+            className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+            title="Bible Quiz"
+          >
+            <Gamepad2 className="w-6 h-6" />
+          </button>
+          <button
+            onClick={() => setShowCreatePost(true)}
+            className="w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+            title="Create Post"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        </div>
       </div>
-    </Layout>
+      </Layout>
+
+      {/* Modals */}
+      <NotificationPanel
+        notifications={notifications}
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        onNotificationRead={handleNotificationRead}
+      />
+      
+      <ProfileViewer
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+      />
+      
+      <Settings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+      
+      <CreatePost
+        isOpen={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onPostCreated={handlePostCreated}
+      />
+      
+      <BibleQuiz
+        isOpen={showBibleQuiz}
+        onClose={() => setShowBibleQuiz(false)}
+      />
+    </>
   );
 }
