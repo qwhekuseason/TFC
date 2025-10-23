@@ -75,11 +75,11 @@ export default function FamilyDashboard() {
         setNotifications(notificationsData);
         
       } catch (error) {
-        if (error instanceof Error && error.message.includes('Failed to fetch')) {
-          console.warn('Network connectivity issue, some data may not load');
-        } else {
-          console.error('Error loading family data:', error);
-        }
+        console.error('Error loading family data:', error);
+        // Set empty arrays to prevent undefined errors
+        setRecentMedia([]);
+        setRecentPosts([]);
+        setNotifications([]);
       } finally {
         setLoading(false);
       }
@@ -92,13 +92,21 @@ export default function FamilyDashboard() {
     let unsubscribeNotifications: (() => void) | undefined;
     
     if (userData?.familyId) {
-      unsubscribePosts = subscribeToFamilyPosts(userData.familyId, setRecentPosts);
-      unsubscribeNotifications = subscribeToFamilyNotifications(userData.familyId, setNotifications);
+      try {
+        unsubscribePosts = subscribeToFamilyPosts(userData.familyId, setRecentPosts);
+        unsubscribeNotifications = subscribeToFamilyNotifications(userData.familyId, setNotifications);
+      } catch (error) {
+        console.error('Error setting up real-time listeners:', error);
+      }
     }
     
     return () => {
-      if (unsubscribePosts) unsubscribePosts();
-      if (unsubscribeNotifications) unsubscribeNotifications();
+      try {
+        if (unsubscribePosts) unsubscribePosts();
+        if (unsubscribeNotifications) unsubscribeNotifications();
+      } catch (error) {
+        console.error('Error cleaning up listeners:', error);
+      }
     };
   }, [userData?.familyId]);
 
