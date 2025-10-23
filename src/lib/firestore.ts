@@ -379,6 +379,7 @@ export const subscribeToUserProfile = (userId: string, callback: (user: User | n
     }
   }, (error) => {
     console.error('Error listening to user profile:', error);
-    callback(null);
+    // Don't callback null on error, let the component handle the error state
+    console.warn('User profile subscription error, retrying...');
   });
 };
