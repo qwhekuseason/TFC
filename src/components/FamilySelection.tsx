@@ -134,7 +134,6 @@ export default function FamilySelection() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">{family.name}</h3>
                 <p className={`text-sm mb-4 ${
-                  selectedFamily === family.id ? 'text-white/90' : 'text-gray-600'
                   selectedFamily === family.id 
                     ? 'text-white/90' 
                     : isDarkMode 
