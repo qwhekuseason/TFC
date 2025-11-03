@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronRight, Eye, EyeOff, Mail, Lock, User, Heart } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, Mail, Lock, User, Heart, Crown } from 'lucide-react';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -8,6 +8,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isAdminSignup, setIsAdminSignup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +23,7 @@ export default function Auth() {
       if (isLogin) {
         await login(email, password);
       } else {
-        await signup(email, password, displayName);
+        await signup(email, password, displayName, isAdminSignup);
       }
     } catch (error: any) {
       setError(error.message);
@@ -123,6 +124,70 @@ export default function Auth() {
                 </button>
               </div>
             </div>
+            {!isLogin && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  <label className={`block text-sm font-medium ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Account Type
+                  </label>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAdminSignup(false)}
+                    className={`flex items-center justify-center space-x-2 p-3 rounded-xl border-2 transition-all ${
+                      !isAdminSignup
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                        : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <User className={`w-4 h-4 ${
+                      !isAdminSignup ? 'text-purple-600' : 'text-gray-500'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      !isAdminSignup ? 'text-purple-600' : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      Member
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAdminSignup(true)}
+                    className={`flex items-center justify-center space-x-2 p-3 rounded-xl border-2 transition-all ${
+                      isAdminSignup
+                        ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                        : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <Crown className={`w-4 h-4 ${
+                      isAdminSignup ? 'text-yellow-600' : 'text-gray-500'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      isAdminSignup ? 'text-yellow-600' : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      Admin
+                    </span>
+                  </button>
+                </div>
+                {isAdminSignup && (
+                  <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-start space-x-2">
+                      <Crown className="w-4 h-4 text-yellow-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                          Admin Account
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                          Admin accounts can manage family members, content, and settings. Each family can have up to 2 admins.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               type="submit"

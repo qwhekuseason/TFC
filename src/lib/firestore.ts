@@ -98,6 +98,10 @@ export const promoteToAdmin = async (userId: string, familyId: string): Promise<
   return true;
 };
 
+export const checkAdminLimit = async (familyId: string): Promise<boolean> => {
+  const admins = await getFamilyAdmins(familyId);
+  return admins.length < 2;
+};
 export const demoteFromAdmin = async (userId: string): Promise<void> => {
   const userRef = doc(db, 'users', userId);
   await updateDoc(userRef, { role: 'member' });

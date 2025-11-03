@@ -14,7 +14,7 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, displayName: string) => Promise<void>;
+  signup: (email: string, password: string, displayName: string, isAdmin?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   updateUserData: (data: Partial<User>) => void;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function signup(email: string, password: string, displayName: string) {
+  async function signup(email: string, password: string, displayName: string, isAdmin: boolean = false) {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     
     // Create user profile in Firestore
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: user.email!,
       displayName,
       familyId: '', // Will be set when user selects family
-      role: 'member'
+      role: isAdmin ? 'admin' : 'member'
     };
     
     await createUserProfile(user.uid, newUserData);
