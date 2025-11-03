@@ -26,6 +26,22 @@ export const initializeFamilies = async () => {
       imageUrl: 'https://images.pexels.com/photos/1587927/pexels-photo-1587927.jpeg?auto=compress&cs=tinysrgb&w=800',
       memberCount: 0,
       createdAt: serverTimestamp()
+    },
+    {
+      id: 'grace',
+      name: 'Grace Family',
+      description: 'Living by grace through faith, extending God\'s love and mercy to all.',
+      imageUrl: 'https://images.pexels.com/photos/8468470/pexels-photo-8468470.jpeg?auto=compress&cs=tinysrgb&w=800',
+      memberCount: 0,
+      createdAt: serverTimestamp()
+    },
+    {
+      id: 'hope',
+      name: 'Hope Family',
+      description: 'Anchored in hope, spreading encouragement and faith in our community.',
+      imageUrl: 'https://images.pexels.com/photos/1587927/pexels-photo-1587927.jpeg?auto=compress&cs=tinysrgb&w=800',
+      memberCount: 0,
+      createdAt: serverTimestamp()
     }
   ];
 

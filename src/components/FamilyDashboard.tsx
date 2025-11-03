@@ -16,6 +16,7 @@ import ProfileViewer from './ProfileViewer';
 import Settings from './Settings';
 import CreatePost from './CreatePost';
 import BibleQuiz from './BibleQuiz';
+import AdminDashboard from './AdminDashboard';
 import { 
   Image, 
   Music, 
@@ -50,6 +51,7 @@ export default function FamilyDashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showBibleQuiz, setShowBibleQuiz] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
 
   useEffect(() => {
     const loadFamilyData = async () => {
@@ -167,7 +169,12 @@ export default function FamilyDashboard() {
               <div className="flex items-center space-x-6 mt-4">
                 <div className="flex items-center space-x-2">
                   <Users className="w-5 h-5" />
-                  <span>{family?.memberCount} members</span>
+                  <span>
+                    {family?.memberCount && family.memberCount > 0 
+                      ? `${family.memberCount} member${family.memberCount !== 1 ? 's' : ''}`
+                      : 'No members yet'
+                    }
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5" />
@@ -177,6 +184,15 @@ export default function FamilyDashboard() {
             </div>
             <div className="hidden md:block">
               <div className="flex space-x-4">
+                {userData?.role === 'admin' && (
+                  <button
+                    onClick={() => setShowAdminDashboard(true)}
+                    className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center hover:bg-white/30 transition-colors"
+                    title="Admin Dashboard"
+                  >
+                    <Shield className="w-8 h-8 text-white" />
+                  </button>
+                )}
                 <button
                   onClick={() => setShowBibleQuiz(true)}
                   className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center hover:bg-white/30 transition-colors"
@@ -573,6 +589,15 @@ export default function FamilyDashboard() {
 
         {/* Floating Action Buttons */}
         <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
+          {userData?.role === 'admin' && (
+            <button
+              onClick={() => setShowAdminDashboard(true)}
+              className="w-14 h-14 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+              title="Admin Dashboard"
+            >
+              <Shield className="w-6 h-6" />
+            </button>
+          )}
           <button
             onClick={() => setShowBibleQuiz(true)}
             className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
@@ -618,6 +643,11 @@ export default function FamilyDashboard() {
       <BibleQuiz
         isOpen={showBibleQuiz}
         onClose={() => setShowBibleQuiz(false)}
+      />
+      
+      <AdminDashboard
+        isOpen={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
       />
     </>
   );

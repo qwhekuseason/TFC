@@ -88,7 +88,12 @@ export default function FamilySelection() {
                   selectedFamily === family.id ? 'text-white/90' : 'text-gray-500'
                 }`}>
                   <Users className="w-4 h-4" />
-                  <span>{family.memberCount} members</span>
+                  <span>
+                    {family.memberCount > 0 
+                      ? `${family.memberCount} member${family.memberCount !== 1 ? 's' : ''}`
+                      : 'No members yet'
+                    }
+                  </span>
                 </div>
               </div>
 

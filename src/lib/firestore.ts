@@ -51,7 +51,7 @@ export const getUserProfile = async (userId: string): Promise<User | null> => {
 
 export const updateUserFamily = async (userId: string, familyId: string) => {
   const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, { familyId }, { merge: true });
+  await updateDoc(userRef, { familyId });
   
   // Update family member count
   const familyRef = doc(db, 'families', familyId);
@@ -98,6 +98,43 @@ export const promoteToAdmin = async (userId: string, familyId: string): Promise<
   return true;
 };
 
+export const demoteFromAdmin = async (userId: string): Promise<void> => {
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { role: 'member' });
+};
+
+export const removeMemberFromFamily = async (userId: string, familyId: string): Promise<void> => {
+  // Update user to remove family
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { familyId: '', role: 'member' });
+  
+  // Decrease family member count
+  const familyRef = doc(db, 'families', familyId);
+  await updateDoc(familyRef, {
+    memberCount: increment(-1)
+  });
+};
+
+export const updateFamilyInfo = async (familyId: string, updates: Partial<Family>): Promise<void> => {
+  const familyRef = doc(db, 'families', familyId);
+  await updateDoc(familyRef, updates);
+};
+
+export const getFamilyStats = async (familyId: string) => {
+  const [posts, media, members] = await Promise.all([
+    getFamilyPosts(familyId),
+    getFamilyMedia(familyId),
+    getUsersByFamily(familyId)
+  ]);
+  
+  return {
+    totalPosts: posts.length,
+    totalMedia: media.length,
+    totalMembers: members.length,
+    adminCount: members.filter(m => m.role === 'admin').length,
+    recentActivity: posts.slice(0, 5)
+  };
+};
 // Families Collection
 export const getFamilies = async (): Promise<Family[]> => {
   const familiesRef = collection(db, 'families');
