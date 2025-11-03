@@ -14,25 +14,7 @@ import {
   getFamilyMedia,
   getFamilyPosts
 } from '../lib/firestore';
-import { 
-  X, 
-  Users, 
-  Crown, 
-  Shield, 
-  Settings, 
-  BarChart3, 
-  UserPlus, 
-  UserMinus,
-  Edit3,
-  Trash2,
-  MessageSquare,
-  Image,
-  Music,
-  Calendar,
-  Activity,
-  AlertTriangle,
-  CheckCircle
-} from 'lucide-react';
+import { X, Users, Crown, Shield, Settings, BarChart3, UserPlus, UserMinus, CreditCard as Edit3, Trash2, MessageSquare, Image, Music, Calendar, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface AdminDashboardProps {
   isOpen: boolean;
